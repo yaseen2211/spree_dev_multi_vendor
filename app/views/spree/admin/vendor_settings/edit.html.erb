@@ -34,8 +34,9 @@
       <div class="form-group">
         <%= f.field_container :image do %>
           <%= f.label :image %>
-          <%= f.file_field :image %>
+          <%= f.file_field :image,accept: "image/x-png,image/jpg,image/jpeg" %>
           <%= image_tag main_app.url_for(@vendor.image.url(:small)) if @vendor.image %>
+          <p><small>only accept (.png, jpeg, jpg)</small></p>
         <% end %>
       </div>
     <% end %>
