@@ -34,6 +34,8 @@ module Spree
       has_many :vendor_calenders
       has_many :calenders, through: :vendor_calenders
     end
+    has_many :vendor_opted_questions
+    has_many :required_questions, through: :vendor_opted_questions
     
     scope :from_collection, -> (vendors_arr) {where("spree_vendors.id IN (?)", vendors_arr)}
     scope :available_vendors, -> {pluck(:id, :name)}
