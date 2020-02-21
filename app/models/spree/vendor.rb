@@ -16,35 +16,31 @@ module Spree
       validates_associated :image
     end
     validates :notification_email, email: true, allow_blank: true
-    has_many :auctions, class_name: 'Spree::Auction'
 
-    with_options dependent: :destroy do
-      if Spree.version.to_f >= 3.6
-        has_one :image, as: :viewable, dependent: :destroy, class_name: 'Spree::VendorImage'
-      end
-      has_many :commissions, class_name: 'Spree::OrderCommission'
-      has_many :option_types
-      has_many :products
-      has_many :properties
-      has_many :shipping_methods
-      has_many :stock_locations
-      has_many :variants
-      has_many :vendor_users
-      has_many :images, -> { order(:position) }, as: :viewable, dependent: :destroy, class_name: 'Spree::Image'
-      has_many :vendor_calenders
-      has_many :calenders, through: :vendor_calenders
-    end
-    has_many :vendor_opted_questions
-    has_many :required_questions, through: :vendor_opted_questions
-    
     scope :from_collection, -> (vendors_arr) {where("spree_vendors.id IN (?)", vendors_arr)}
     scope :available_vendors, -> {pluck(:id, :name)}
-    has_many :orders
-    has_many :users, through: :vendor_users
 
+    before_destroy :validate_dependent_presence
     after_create :create_stock_location
     after_update :update_stock_location_names
 
+    has_many :auctions, class_name: 'Spree::Auction'
+    if Spree.version.to_f >= 3.6
+      has_one :image, as: :viewable, dependent: :destroy, class_name: 'Spree::VendorImage'
+    end
+    has_many :commissions, class_name: 'Spree::OrderCommission'
+    has_many :option_types
+    has_many :products
+    has_many :properties
+    has_many :shipping_methods
+    has_many :stock_locations
+    has_many :variants
+    has_many :vendor_users
+    has_many :images, -> { order(:position) }, as: :viewable, dependent: :destroy, class_name: 'Spree::Image'
+    has_many :vendor_calenders
+    has_many :calenders, through: :vendor_calenders
+    has_many :orders
+    has_many :users, through: :vendor_users
     state_machine :state, initial: :pending do
       event :activate do
         transition to: :active
@@ -58,6 +54,23 @@ module Spree
     scope :active, -> { where(state: 'active') }
 
     self.whitelisted_ransackable_attributes = %w[name state]
+
+
+    def validate_dependent_presence
+      dep_objects  = ['auctions','products','calenders']
+      errors = []
+      dep_objects.each do |dob|
+        if self.send(dob.to_sym).any?
+          errors.push( "Cannot delete vendor while #{dob} are associated with it.")
+        end
+      end
+
+      if errors.present?
+        self.errors[:base] << errors.join('.') + "If you realy want to perform this action, then please contact to support."
+        throw :abort
+      end
+      
+    end
 
     def update_notification_email(email)
       update(notification_email: email)
