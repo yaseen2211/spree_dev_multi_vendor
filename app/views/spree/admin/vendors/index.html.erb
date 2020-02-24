@@ -11,12 +11,23 @@
   <div data-hook="admin_vendors_index_search">
     <%= search_form_for [:admin, @search] do |f| %>
       <div class="row">
+        
         <div class="col-md-6">
           <div class="form-group">
             <%= label_tag :q_name_cont, Spree.t(:name) %>
             <%= f.text_field :name_cont, tabindex: 1, class: "form-control js-quick-search-target" %>
           </div>
         </div>
+        
+        <% if spree_current_user.present? && spree_current_user.admin? %>
+          <div class="col-md-6">
+            <div class="form-group">
+              <%= f.label :q_uuid_cont, 'UUID' %>
+              <%= f.text_field 'q_uuid_eq', class: "form-control js-filterable" %>
+            </div>
+          </div>
+        <% end %>
+        
         <div class="col-md-6">
           <div class="form-group">
             <%= label_tag :q_state_eq, Spree.t(:state) %>
